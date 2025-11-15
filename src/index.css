@@ -1,0 +1,204 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* ReActívate Design System - Accesible para adultos mayores */
+    
+    /* Base colors */
+    --background: 0 0% 98%;
+    --foreground: 276 89% 20%;
+
+    /* Card colors */
+    --card: 0 0% 100%;
+    --card-foreground: 276 89% 20%;
+
+    /* Popover colors */
+    --popover: 0 0% 100%;
+    --popover-foreground: 276 89% 20%;
+
+    /* Primary - Morado #6A0DAD */
+    --primary: 276 89% 36%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 276 89% 50%;
+    --primary-dark: 276 89% 28%;
+
+    /* Accent - Verde fluorescente #39FF14 */
+    --accent: 100 100% 54%;
+    --accent-foreground: 276 89% 20%;
+    --accent-light: 100 100% 65%;
+    --accent-dark: 100 100% 45%;
+
+    /* Secondary colors */
+    --secondary: 276 30% 95%;
+    --secondary-foreground: 276 89% 36%;
+
+    /* Muted colors */
+    --muted: 276 20% 92%;
+    --muted-foreground: 276 20% 45%;
+
+    /* Status colors */
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    /* Border & Input */
+    --border: 276 20% 88%;
+    --input: 276 20% 88%;
+    --ring: 276 89% 36%;
+
+    /* Border radius - más redondeado para suavidad */
+    --radius: 0.75rem;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(276 89% 36%), hsl(276 89% 50%));
+    --gradient-accent: linear-gradient(135deg, hsl(100 100% 54%), hsl(100 100% 65%));
+    --gradient-hero: linear-gradient(135deg, hsl(276 89% 36%), hsl(100 100% 54%));
+
+    /* Shadows - suaves para accesibilidad visual */
+    --shadow-sm: 0 2px 4px rgba(106, 13, 173, 0.08);
+    --shadow-md: 0 4px 8px rgba(106, 13, 173, 0.12);
+    --shadow-lg: 0 8px 16px rgba(106, 13, 173, 0.16);
+
+    /* Transitions */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .dark {
+    --background: 276 89% 8%;
+    --foreground: 0 0% 98%;
+
+    --card: 276 89% 12%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 276 89% 12%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 276 89% 50%;
+    --primary-foreground: 0 0% 100%;
+    --primary-light: 276 89% 60%;
+    --primary-dark: 276 89% 40%;
+
+    --accent: 100 100% 54%;
+    --accent-foreground: 276 89% 8%;
+    --accent-light: 100 100% 65%;
+    --accent-dark: 100 100% 45%;
+
+    --secondary: 276 30% 18%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 276 20% 20%;
+    --muted-foreground: 276 20% 65%;
+
+    --success: 142 76% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 0 0% 100%;
+    --destructive: 0 84% 65%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 276 20% 25%;
+    --input: 276 20% 25%;
+    --ring: 276 89% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    /* Tipografía base grande para adultos mayores */
+    font-size: 18px;
+    line-height: 1.6;
+  }
+
+  /* Mejoras de accesibilidad */
+  button, a {
+    @apply transition-all duration-300;
+    min-height: 44px; /* Tamaño mínimo táctil WCAG */
+    min-width: 44px;
+  }
+
+  /* Eliminar animaciones si el usuario las desactiva */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* Estilos para enfoque visible (accesibilidad) */
+  *:focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+
+  /* Títulos con mejor jerarquía */
+  h1 {
+    @apply text-4xl md:text-5xl font-bold;
+  }
+
+  h2 {
+    @apply text-3xl md:text-4xl font-bold;
+  }
+
+  h3 {
+    @apply text-2xl md:text-3xl font-semibold;
+  }
+
+  /* Estilos de scrollbar personalizados */
+  ::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-primary rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-primary-light;
+  }
+}
+
+/* Clases de utilidad personalizadas */
+@layer utilities {
+  .gradient-primary {
+    background: var(--gradient-primary);
+  }
+
+  .gradient-accent {
+    background: var(--gradient-accent);
+  }
+
+  .gradient-hero {
+    background: var(--gradient-hero);
+  }
+
+  .shadow-glow {
+    box-shadow: 0 0 20px hsl(var(--accent) / 0.3);
+  }
+
+  .text-accessible {
+    font-size: 1.125rem;
+    line-height: 1.75;
+  }
+
+  .container-accessible {
+    @apply max-w-6xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+}

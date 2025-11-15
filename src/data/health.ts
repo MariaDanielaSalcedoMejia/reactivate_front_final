@@ -170,8 +170,13 @@ export const recommendationsByGoal: Record<string, Recommendation> = {
 };
 
 // Función helper para generar recomendaciones basadas en una evaluación
-export const generateRecommendations = (assessment: HealthAssessment): Recommendation[] => {
+export const generateRecommendations = (assessment: HealthAssessment | null): Recommendation[] => {
   const recommendations: Recommendation[] = [];
+
+  // Validar que assessment existe y es válido
+  if (!assessment) {
+    return recommendations;
+  }
 
   // Recomendación por nivel de movilidad
   if (assessment.mobilityLevel && recommendationsByMobility[assessment.mobilityLevel]) {
@@ -179,11 +184,13 @@ export const generateRecommendations = (assessment: HealthAssessment): Recommend
   }
 
   // Recomendaciones por condiciones crónicas
-  assessment.chronicConditions.forEach((condition) => {
-    if (recommendationsByCondition[condition] && condition !== "none") {
-      recommendations.push(recommendationsByCondition[condition]);
-    }
-  });
+  if (assessment.chronicConditions && Array.isArray(assessment.chronicConditions)) {
+    assessment.chronicConditions.forEach((condition) => {
+      if (recommendationsByCondition[condition] && condition !== "none") {
+        recommendations.push(recommendationsByCondition[condition]);
+      }
+    });
+  }
 
   // Recomendación por frecuencia de ejercicio
   if (assessment.exerciseFrequency && recommendationsByFrequency[assessment.exerciseFrequency]) {
@@ -196,11 +203,13 @@ export const generateRecommendations = (assessment: HealthAssessment): Recommend
   }
 
   // Recomendaciones por objetivos
-  assessment.goals.forEach((goal) => {
-    if (recommendationsByGoal[goal]) {
-      recommendations.push(recommendationsByGoal[goal]);
-    }
-  });
+  if (assessment.goals && Array.isArray(assessment.goals)) {
+    assessment.goals.forEach((goal) => {
+      if (recommendationsByGoal[goal]) {
+        recommendations.push(recommendationsByGoal[goal]);
+      }
+    });
+  }
 
   return recommendations;
 };

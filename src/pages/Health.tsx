@@ -33,12 +33,23 @@ const Health = () => {
 
   useEffect(() => {
     // Cargar evaluación guardada
-    const saved = localStorage.getItem(`reactivate_health_${user?.id}`);
+    if (!user?.id) return;
+    
+    const saved = localStorage.getItem(`reactivate_health_${user.id}`);
     if (saved) {
-      const data = JSON.parse(saved);
-      setSavedAssessment(data);
-      setAssessment(data);
-      setShowRecommendations(true);
+      try {
+        const data = JSON.parse(saved);
+        // Validar que los datos son válidos y no null
+        if (data && typeof data === 'object' && 'mobilityLevel' in data) {
+          setSavedAssessment(data);
+          setAssessment(data);
+          setShowRecommendations(true);
+        }
+      } catch (error) {
+        console.error("Error al cargar la evaluación guardada:", error);
+        // Si hay error, limpiar el localStorage
+        localStorage.removeItem(`reactivate_health_${user.id}`);
+      }
     }
   }, [user]);
 

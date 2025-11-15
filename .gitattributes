@@ -1,0 +1,34 @@
+# Configuración de finales de línea para Git
+# Force LF line endings for all text files
+
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Force LF for common text files
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.svg text eol=lf
+*.txt text eol=lf
+*.config.js text eol=lf
+*.config.ts text eol=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+

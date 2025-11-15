@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import {
 
 const Health = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [assessment, setAssessment] = useState<HealthAssessment>({
     mobilityLevel: "",
     chronicConditions: [],
@@ -128,7 +130,7 @@ const Health = () => {
               Modificar evaluación
             </Button>
             <Button
-              onClick={() => window.location.href = "/exercises"}
+              onClick={() => navigate("/exercises")}
               size="lg"
               className="text-lg"
             >

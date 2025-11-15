@@ -36,14 +36,36 @@ const Health = () => {
     if (!user?.id) return;
     
     const saved = localStorage.getItem(`reactivate_health_${user.id}`);
-    if (saved) {
+    if (saved && saved !== 'null') {
       try {
         const data = JSON.parse(saved);
-        // Validar que los datos son válidos y no null
-        if (data && typeof data === 'object' && 'mobilityLevel' in data) {
-          setSavedAssessment(data);
-          setAssessment(data);
+        // Validar que los datos son válidos y tienen la estructura correcta
+        if (
+          data && 
+          typeof data === 'object' && 
+          data !== null &&
+          'mobilityLevel' in data &&
+          'chronicConditions' in data &&
+          'exerciseFrequency' in data &&
+          'painLevel' in data &&
+          'goals' in data &&
+          Array.isArray(data.chronicConditions) &&
+          Array.isArray(data.goals)
+        ) {
+          // Asegurar que todos los campos tienen valores por defecto si faltan
+          const validAssessment: HealthAssessment = {
+            mobilityLevel: data.mobilityLevel || "",
+            chronicConditions: Array.isArray(data.chronicConditions) ? data.chronicConditions : [],
+            exerciseFrequency: data.exerciseFrequency || "",
+            painLevel: data.painLevel || "",
+            goals: Array.isArray(data.goals) ? data.goals : [],
+          };
+          setSavedAssessment(validAssessment);
+          setAssessment(validAssessment);
           setShowRecommendations(true);
+        } else {
+          // Datos inválidos, limpiar localStorage
+          localStorage.removeItem(`reactivate_health_${user.id}`);
         }
       } catch (error) {
         console.error("Error al cargar la evaluación guardada:", error);
@@ -80,19 +102,22 @@ const Health = () => {
   };
 
   const handleGoalToggle = (goal: string) => {
-    setAssessment(prev => ({
-      ...prev,
-      goals: prev.goals.includes(goal)
-        ? prev.goals.filter(g => g !== goal)
-        : [...prev.goals, goal],
-    }));
+    setAssessment(prev => {
+      const currentGoals = prev.goals || [];
+      return {
+        ...prev,
+        goals: currentGoals.includes(goal)
+          ? currentGoals.filter(g => g !== goal)
+          : [...currentGoals, goal],
+      };
+    });
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     // Validar que se haya completado al menos el nivel de movilidad
-    if (!assessment.mobilityLevel) {
+    if (!assessment || !assessment.mobilityLevel) {
       toast({
         title: "Completa la evaluación",
         description: "Por favor, selecciona al menos tu nivel de movilidad",
@@ -102,7 +127,7 @@ const Health = () => {
     }
 
     // Validar que se haya seleccionado al menos un objetivo
-    if (assessment.goals.length === 0) {
+    if (!assessment || !assessment.goals || assessment.goals.length === 0) {
       toast({
         title: "Completa la evaluación",
         description: "Por favor, selecciona al menos un objetivo",
@@ -129,6 +154,9 @@ const Health = () => {
   };
 
   const getRecommendations = () => {
+    if (!assessment) {
+      return [];
+    }
     return generateRecommendations(assessment);
   };
 
@@ -247,9 +275,9 @@ const Health = () => {
               <CardTitle className="text-2xl">¿Cómo describirías tu nivel de movilidad actual?</CardTitle>
             </CardHeader>
             <CardContent>
-              <RadioGroup
-                value={assessment.mobilityLevel}
-                onValueChange={(value) => setAssessment({ ...assessment, mobilityLevel: value })}
+                <RadioGroup
+                value={assessment?.mobilityLevel || ""}
+                onValueChange={(value) => setAssessment(prev => ({ ...prev, mobilityLevel: value }))}
                 className="space-y-4"
               >
                 {mobilityLevels.map((level) => (
@@ -275,12 +303,12 @@ const Health = () => {
                   key={condition.id}
                   onClick={() => handleConditionToggle(condition.id)}
                   className={`flex items-center space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                    (assessment.chronicConditions || []).includes(condition.id)
+                    (assessment?.chronicConditions || []).includes(condition.id)
                       ? "bg-primary/10 border-primary"
                       : "hover:bg-secondary/50"
                   }`}
                 >
-                  {(assessment.chronicConditions || []).includes(condition.id) ? (
+                  {(assessment?.chronicConditions || []).includes(condition.id) ? (
                     <CheckCircle2 className="w-6 h-6 text-primary" />
                   ) : (
                     <div className="w-6 h-6 rounded-full border-2" />
@@ -298,8 +326,8 @@ const Health = () => {
             </CardHeader>
             <CardContent>
               <RadioGroup
-                value={assessment.exerciseFrequency}
-                onValueChange={(value) => setAssessment({ ...assessment, exerciseFrequency: value })}
+                value={assessment?.exerciseFrequency || ""}
+                onValueChange={(value) => setAssessment(prev => ({ ...prev, exerciseFrequency: value }))}
                 className="space-y-4"
               >
                 {exerciseFrequencies.map((freq) => (
@@ -321,8 +349,8 @@ const Health = () => {
             </CardHeader>
             <CardContent>
               <RadioGroup
-                value={assessment.painLevel}
-                onValueChange={(value) => setAssessment({ ...assessment, painLevel: value })}
+                value={assessment?.painLevel || ""}
+                onValueChange={(value) => setAssessment(prev => ({ ...prev, painLevel: value }))}
                 className="space-y-4"
               >
                 {painLevels.map((pain) => (
@@ -348,12 +376,12 @@ const Health = () => {
                   key={goal.id}
                   onClick={() => handleGoalToggle(goal.id)}
                   className={`flex items-center space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                    (assessment.goals || []).includes(goal.id)
+                    (assessment?.goals || []).includes(goal.id)
                       ? "bg-primary/10 border-primary"
                       : "hover:bg-secondary/50"
                   }`}
                 >
-                  {(assessment.goals || []).includes(goal.id) ? (
+                  {(assessment?.goals || []).includes(goal.id) ? (
                     <CheckCircle2 className="w-6 h-6 text-primary" />
                   ) : (
                     <div className="w-6 h-6 rounded-full border-2" />

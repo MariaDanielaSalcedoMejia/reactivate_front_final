@@ -53,13 +53,13 @@ const Dashboard = () => {
       link: "/exercises",
       color: "text-accent",
     },
-    {
-      title: "Evaluación de Salud",
-      description: "Completa tu evaluación personalizada",
-      icon: Heart,
-      link: "/health",
-      color: "text-primary",
-    },
+    // {
+    //   title: "Evaluación de Salud",
+    //   description: "Completa tu evaluación personalizada",
+    //   icon: Heart,
+    //   link: "/health",
+    //   color: "text-primary",
+    // }, // Deshabilitado
     {
       title: "Blog de Nutrición",
       description: "Consejos de alimentación saludable",

@@ -24,7 +24,7 @@ export const Navbar = () => {
   const navItems = [
     { path: "/dashboard", icon: Home, label: "Inicio" },
     { path: "/exercises", icon: Dumbbell, label: "Ejercicios" },
-    { path: "/health", icon: HeartPulse, label: "Evaluación" },
+    // { path: "/health", icon: HeartPulse, label: "Evaluación" }, // Deshabilitado
     { path: "/blog", icon: BookOpen, label: "Blog" },
     { path: "/forum", icon: MessageSquare, label: "Foro" },
     { path: "/progress", icon: TrendingUp, label: "Progreso" },

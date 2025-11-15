@@ -6,15 +6,16 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "@/hooks/use-toast";
-import { Heart, Activity, AlertCircle, CheckCircle2, Lightbulb } from "lucide-react";
-
-interface HealthAssessment {
-  mobilityLevel: string;
-  chronicConditions: string[];
-  exerciseFrequency: string;
-  painLevel: string;
-  goals: string[];
-}
+import { AlertCircle, CheckCircle2 } from "lucide-react";
+import {
+  type HealthAssessment,
+  mobilityLevels,
+  chronicConditions,
+  exerciseFrequencies,
+  painLevels,
+  goalOptions,
+  generateRecommendations,
+} from "@/data/health";
 
 const Health = () => {
   const { user } = useAuth();
@@ -68,94 +69,7 @@ const Health = () => {
   };
 
   const getRecommendations = () => {
-    const recommendations = [];
-
-    // Basado en nivel de movilidad
-    if (assessment.mobilityLevel === "high") {
-      recommendations.push({
-        title: "Ejercicios de resistencia moderada",
-        description: "Puedes realizar ejercicios como caminar rápido, nadar o usar bandas elásticas.",
-        icon: Activity,
-      });
-    } else if (assessment.mobilityLevel === "medium") {
-      recommendations.push({
-        title: "Ejercicios de bajo impacto",
-        description: "Prueba ejercicios sentado, yoga suave o caminatas cortas.",
-        icon: Activity,
-      });
-    } else if (assessment.mobilityLevel === "low") {
-      recommendations.push({
-        title: "Ejercicios adaptados",
-        description: "Movimientos suaves desde una silla, estiramientos y ejercicios de respiración.",
-        icon: Activity,
-      });
-    }
-
-    // Basado en condiciones crónicas
-    if (assessment.chronicConditions.includes("arthritis")) {
-      recommendations.push({
-        title: "Ejercicios para artritis",
-        description: "Movimientos suaves en agua caliente, estiramientos y ejercicios de rango de movimiento.",
-        icon: Heart,
-      });
-    }
-    if (assessment.chronicConditions.includes("diabetes")) {
-      recommendations.push({
-        title: "Control de glucosa",
-        description: "Caminatas regulares después de las comidas y ejercicios de resistencia ligera.",
-        icon: Heart,
-      });
-    }
-    if (assessment.chronicConditions.includes("hypertension")) {
-      recommendations.push({
-        title: "Cardio suave",
-        description: "Caminatas, natación suave y ejercicios de respiración profunda.",
-        icon: Heart,
-      });
-    }
-
-    // Basado en frecuencia de ejercicio
-    if (assessment.exerciseFrequency === "none") {
-      recommendations.push({
-        title: "Comienza despacio",
-        description: "Inicia con 5-10 minutos de actividad al día. La constancia es más importante que la intensidad.",
-        icon: Lightbulb,
-      });
-    }
-
-    // Basado en nivel de dolor
-    if (assessment.painLevel === "high") {
-      recommendations.push({
-        title: "Ejercicios sin dolor",
-        description: "Prioriza estiramientos suaves y movimientos en agua. Consulta a tu médico antes de comenzar.",
-        icon: AlertCircle,
-      });
-    }
-
-    // Basado en objetivos
-    if (assessment.goals.includes("strength")) {
-      recommendations.push({
-        title: "Fortalecimiento muscular",
-        description: "Usa bandas elásticas o botellas de agua. Empieza con 2-3 sesiones semanales.",
-        icon: Activity,
-      });
-    }
-    if (assessment.goals.includes("flexibility")) {
-      recommendations.push({
-        title: "Mejora tu flexibilidad",
-        description: "Dedica 10 minutos diarios a estiramientos suaves. El yoga es excelente.",
-        icon: Activity,
-      });
-    }
-    if (assessment.goals.includes("balance")) {
-      recommendations.push({
-        title: "Equilibrio y prevención de caídas",
-        description: "Practica pararte en un pie, caminar en línea recta y Tai Chi.",
-        icon: Activity,
-      });
-    }
-
-    return recommendations;
+    return generateRecommendations(assessment);
   };
 
   if (showRecommendations) {
@@ -251,24 +165,14 @@ const Health = () => {
                 onValueChange={(value) => setAssessment({ ...assessment, mobilityLevel: value })}
                 className="space-y-4"
               >
-                <div className="flex items-center space-x-3 p-4 rounded-lg border-2 hover:bg-secondary/50 transition-colors">
-                  <RadioGroupItem value="high" id="high" />
-                  <Label htmlFor="high" className="text-lg cursor-pointer flex-1">
-                    Alto - Puedo caminar sin dificultad y realizar la mayoría de actividades
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-3 p-4 rounded-lg border-2 hover:bg-secondary/50 transition-colors">
-                  <RadioGroupItem value="medium" id="medium" />
-                  <Label htmlFor="medium" className="text-lg cursor-pointer flex-1">
-                    Medio - Puedo caminar pero con algunas limitaciones
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-3 p-4 rounded-lg border-2 hover:bg-secondary/50 transition-colors">
-                  <RadioGroupItem value="low" id="low" />
-                  <Label htmlFor="low" className="text-lg cursor-pointer flex-1">
-                    Bajo - Necesito ayuda para caminar o uso silla de ruedas
-                  </Label>
-                </div>
+                {mobilityLevels.map((level) => (
+                  <div key={level.value} className="flex items-center space-x-3 p-4 rounded-lg border-2 hover:bg-secondary/50 transition-colors">
+                    <RadioGroupItem value={level.value} id={level.value} />
+                    <Label htmlFor={level.value} className="text-lg cursor-pointer flex-1">
+                      {level.label}
+                    </Label>
+                  </div>
+                ))}
               </RadioGroup>
             </CardContent>
           </Card>
@@ -279,14 +183,7 @@ const Health = () => {
               <CardTitle className="text-2xl">¿Tienes alguna de estas condiciones? (Selecciona todas las que apliquen)</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {[
-                { id: "arthritis", label: "Artritis" },
-                { id: "diabetes", label: "Diabetes" },
-                { id: "hypertension", label: "Hipertensión" },
-                { id: "heart", label: "Problemas cardíacos" },
-                { id: "osteoporosis", label: "Osteoporosis" },
-                { id: "none", label: "Ninguna de las anteriores" },
-              ].map((condition) => (
+              {chronicConditions.map((condition) => (
                 <div
                   key={condition.id}
                   onClick={() => handleConditionToggle(condition.id)}
@@ -318,30 +215,14 @@ const Health = () => {
                 onValueChange={(value) => setAssessment({ ...assessment, exerciseFrequency: value })}
                 className="space-y-4"
               >
-                <div className="flex items-center space-x-3 p-4 rounded-lg border-2 hover:bg-secondary/50 transition-colors">
-                  <RadioGroupItem value="daily" id="daily" />
-                  <Label htmlFor="daily" className="text-lg cursor-pointer flex-1">
-                    Diariamente
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-3 p-4 rounded-lg border-2 hover:bg-secondary/50 transition-colors">
-                  <RadioGroupItem value="weekly" id="weekly" />
-                  <Label htmlFor="weekly" className="text-lg cursor-pointer flex-1">
-                    3-5 veces por semana
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-3 p-4 rounded-lg border-2 hover:bg-secondary/50 transition-colors">
-                  <RadioGroupItem value="occasionally" id="occasionally" />
-                  <Label htmlFor="occasionally" className="text-lg cursor-pointer flex-1">
-                    Ocasionalmente (1-2 veces por semana)
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-3 p-4 rounded-lg border-2 hover:bg-secondary/50 transition-colors">
-                  <RadioGroupItem value="none" id="none" />
-                  <Label htmlFor="none" className="text-lg cursor-pointer flex-1">
-                    No hago ejercicio regularmente
-                  </Label>
-                </div>
+                {exerciseFrequencies.map((freq) => (
+                  <div key={freq.value} className="flex items-center space-x-3 p-4 rounded-lg border-2 hover:bg-secondary/50 transition-colors">
+                    <RadioGroupItem value={freq.value} id={freq.value} />
+                    <Label htmlFor={freq.value} className="text-lg cursor-pointer flex-1">
+                      {freq.label}
+                    </Label>
+                  </div>
+                ))}
               </RadioGroup>
             </CardContent>
           </Card>
@@ -357,30 +238,14 @@ const Health = () => {
                 onValueChange={(value) => setAssessment({ ...assessment, painLevel: value })}
                 className="space-y-4"
               >
-                <div className="flex items-center space-x-3 p-4 rounded-lg border-2 hover:bg-secondary/50 transition-colors">
-                  <RadioGroupItem value="none" id="pain-none" />
-                  <Label htmlFor="pain-none" className="text-lg cursor-pointer flex-1">
-                    Sin dolor
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-3 p-4 rounded-lg border-2 hover:bg-secondary/50 transition-colors">
-                  <RadioGroupItem value="mild" id="mild" />
-                  <Label htmlFor="mild" className="text-lg cursor-pointer flex-1">
-                    Dolor leve ocasional
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-3 p-4 rounded-lg border-2 hover:bg-secondary/50 transition-colors">
-                  <RadioGroupItem value="moderate" id="moderate" />
-                  <Label htmlFor="moderate" className="text-lg cursor-pointer flex-1">
-                    Dolor moderado frecuente
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-3 p-4 rounded-lg border-2 hover:bg-secondary/50 transition-colors">
-                  <RadioGroupItem value="high" id="pain-high" />
-                  <Label htmlFor="pain-high" className="text-lg cursor-pointer flex-1">
-                    Dolor intenso constante
-                  </Label>
-                </div>
+                {painLevels.map((pain) => (
+                  <div key={pain.value} className="flex items-center space-x-3 p-4 rounded-lg border-2 hover:bg-secondary/50 transition-colors">
+                    <RadioGroupItem value={pain.value} id={pain.value} />
+                    <Label htmlFor={pain.value} className="text-lg cursor-pointer flex-1">
+                      {pain.label}
+                    </Label>
+                  </div>
+                ))}
               </RadioGroup>
             </CardContent>
           </Card>
@@ -391,14 +256,7 @@ const Health = () => {
               <CardTitle className="text-2xl">¿Cuáles son tus objetivos? (Selecciona todos los que apliquen)</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {[
-                { id: "strength", label: "Aumentar fuerza muscular" },
-                { id: "flexibility", label: "Mejorar flexibilidad" },
-                { id: "balance", label: "Mejorar equilibrio" },
-                { id: "cardio", label: "Mejorar salud cardiovascular" },
-                { id: "weight", label: "Mantener peso saludable" },
-                { id: "social", label: "Socializar y conocer gente" },
-              ].map((goal) => (
+              {goalOptions.map((goal) => (
                 <div
                   key={goal.id}
                   onClick={() => handleGoalToggle(goal.id)}

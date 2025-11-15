@@ -1,259 +1,121 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useAuth } from "@/contexts/AuthContext";
-import { toast } from "@/hooks/use-toast";
-import { AlertCircle, CheckCircle2 } from "lucide-react";
-import {
-  type HealthAssessment,
-  mobilityLevels,
-  chronicConditions,
-  exerciseFrequencies,
-  painLevels,
-  goalOptions,
-  generateRecommendations,
-} from "@/data/health";
+import { Badge } from "@/components/ui/badge";
+import { Activity, Heart, AlertCircle, Lightbulb } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
+interface Recommendation {
+  id: string;
+  title: string;
+  description: string;
+  icon: typeof Activity;
+  category: string;
+  priority: "alta" | "media" | "baja";
+}
+
+const mockRecommendations: Recommendation[] = [
+  {
+    id: "1",
+    title: "Ejercicios de resistencia moderada",
+    description: "Puedes realizar ejercicios como caminar rápido, nadar o usar bandas elásticas. Estos ejercicios mejoran tu resistencia cardiovascular y fortalecen los músculos sin sobrecargar las articulaciones.",
+    icon: Activity,
+    category: "Movilidad Alta",
+    priority: "alta",
+  },
+  {
+    id: "2",
+    title: "Ejercicios para artritis",
+    description: "Movimientos suaves en agua caliente, estiramientos y ejercicios de rango de movimiento ayudan a mantener la flexibilidad y reducir el dolor articular.",
+    icon: Heart,
+    category: "Condiciones Crónicas",
+    priority: "alta",
+  },
+  {
+    id: "3",
+    title: "Control de glucosa",
+    description: "Caminatas regulares después de las comidas y ejercicios de resistencia ligera ayudan a mantener niveles estables de glucosa en sangre.",
+    icon: Heart,
+    category: "Salud Metabólica",
+    priority: "alta",
+  },
+  {
+    id: "4",
+    title: "Cardio suave",
+    description: "Caminatas, natación suave y ejercicios de respiración profunda mejoran la circulación y la salud cardiovascular sin elevar demasiado la presión arterial.",
+    icon: Heart,
+    category: "Cardiovascular",
+    priority: "alta",
+  },
+  {
+    id: "5",
+    title: "Fortalecimiento muscular",
+    description: "Usa bandas elásticas o botellas de agua. Empieza con 2-3 sesiones semanales. El fortalecimiento muscular previene la pérdida de masa muscular relacionada con la edad.",
+    icon: Activity,
+    category: "Fuerza",
+    priority: "media",
+  },
+  {
+    id: "6",
+    title: "Mejora tu flexibilidad",
+    description: "Dedica 10 minutos diarios a estiramientos suaves. El yoga es excelente para mejorar la flexibilidad, reducir la tensión muscular y mejorar el equilibrio.",
+    icon: Activity,
+    category: "Flexibilidad",
+    priority: "media",
+  },
+  {
+    id: "7",
+    title: "Equilibrio y prevención de caídas",
+    description: "Practica pararte en un pie, caminar en línea recta y Tai Chi. Estos ejercicios mejoran la coordinación y reducen significativamente el riesgo de caídas.",
+    icon: Activity,
+    category: "Equilibrio",
+    priority: "alta",
+  },
+  {
+    id: "8",
+    title: "Salud cardiovascular",
+    description: "Caminatas regulares, natación suave o ejercicios aeróbicos de bajo impacto 3-4 veces por semana mejoran la salud del corazón y los pulmones.",
+    icon: Activity,
+    category: "Cardiovascular",
+    priority: "alta",
+  },
+  {
+    id: "9",
+    title: "Comienza despacio",
+    description: "Inicia con 5-10 minutos de actividad al día. La constancia es más importante que la intensidad. Establece una rutina que puedas mantener a largo plazo.",
+    icon: Lightbulb,
+    category: "Principiantes",
+    priority: "baja",
+  },
+  {
+    id: "10",
+    title: "Ejercicios sin dolor",
+    description: "Prioriza estiramientos suaves y movimientos en agua. Escucha a tu cuerpo y detente si algo duele. Siempre consulta a tu médico antes de comenzar un nuevo programa de ejercicios.",
+    icon: AlertCircle,
+    category: "Precaución",
+    priority: "alta",
+  },
+];
+
+const categories = ["Todas", ...Array.from(new Set(mockRecommendations.map(r => r.category)))];
 
 const Health = () => {
-  const { user } = useAuth();
   const navigate = useNavigate();
-  const [assessment, setAssessment] = useState<HealthAssessment>({
-    mobilityLevel: "",
-    chronicConditions: [],
-    exerciseFrequency: "",
-    painLevel: "",
-    goals: [],
-  });
-  const [showRecommendations, setShowRecommendations] = useState(false);
-  const [savedAssessment, setSavedAssessment] = useState<HealthAssessment | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>("Todas");
 
-  useEffect(() => {
-    // Cargar evaluación guardada
-    if (!user?.id) return;
-    
-    const saved = localStorage.getItem(`reactivate_health_${user.id}`);
-    if (saved && saved !== 'null') {
-      try {
-        const data = JSON.parse(saved);
-        // Validar que los datos son válidos y tienen la estructura correcta
-        if (
-          data && 
-          typeof data === 'object' && 
-          data !== null &&
-          'mobilityLevel' in data &&
-          'chronicConditions' in data &&
-          'exerciseFrequency' in data &&
-          'painLevel' in data &&
-          'goals' in data &&
-          Array.isArray(data.chronicConditions) &&
-          Array.isArray(data.goals)
-        ) {
-          // Asegurar que todos los campos tienen valores por defecto si faltan
-          const validAssessment: HealthAssessment = {
-            mobilityLevel: data.mobilityLevel || "",
-            chronicConditions: Array.isArray(data.chronicConditions) ? data.chronicConditions : [],
-            exerciseFrequency: data.exerciseFrequency || "",
-            painLevel: data.painLevel || "",
-            goals: Array.isArray(data.goals) ? data.goals : [],
-          };
-          setSavedAssessment(validAssessment);
-          setAssessment(validAssessment);
-          setShowRecommendations(true);
-        } else {
-          // Datos inválidos, limpiar localStorage
-          localStorage.removeItem(`reactivate_health_${user.id}`);
-        }
-      } catch (error) {
-        console.error("Error al cargar la evaluación guardada:", error);
-        // Si hay error, limpiar el localStorage
-        localStorage.removeItem(`reactivate_health_${user.id}`);
-      }
-    }
-  }, [user]);
+  const filteredRecommendations = selectedCategory === "Todas"
+    ? mockRecommendations
+    : mockRecommendations.filter(rec => rec.category === selectedCategory);
 
-  const handleConditionToggle = (condition: string) => {
-    setAssessment(prev => {
-      const currentConditions = prev.chronicConditions || [];
-      
-      // Si se selecciona "none", limpiar todas las demás condiciones
-      if (condition === "none") {
-        return {
-          ...prev,
-          chronicConditions: currentConditions.includes("none") 
-            ? [] 
-            : ["none"],
-        };
-      }
-      
-      // Si se selecciona cualquier otra condición, quitar "none" si está presente
-      const newConditions = currentConditions.includes(condition)
-        ? currentConditions.filter(c => c !== condition)
-        : [...currentConditions.filter(c => c !== "none"), condition];
-      
-      return {
-        ...prev,
-        chronicConditions: newConditions,
-      };
-    });
-  };
-
-  const handleGoalToggle = (goal: string) => {
-    setAssessment(prev => {
-      const currentGoals = prev.goals || [];
-      return {
-        ...prev,
-        goals: currentGoals.includes(goal)
-          ? currentGoals.filter(g => g !== goal)
-          : [...currentGoals, goal],
-      };
-    });
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Validar que se haya completado al menos el nivel de movilidad
-    if (!assessment || !assessment.mobilityLevel) {
-      toast({
-        title: "Completa la evaluación",
-        description: "Por favor, selecciona al menos tu nivel de movilidad",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validar que se haya seleccionado al menos un objetivo
-    if (!assessment || !assessment.goals || assessment.goals.length === 0) {
-      toast({
-        title: "Completa la evaluación",
-        description: "Por favor, selecciona al menos un objetivo",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      localStorage.setItem(`reactivate_health_${user?.id}`, JSON.stringify(assessment));
-      setShowRecommendations(true);
-      toast({
-        title: "Evaluación guardada",
-        description: "Tus recomendaciones han sido generadas",
-      });
-    } catch (error) {
-      console.error("Error al guardar la evaluación:", error);
-      toast({
-        title: "Error",
-        description: "No se pudo guardar la evaluación. Por favor, intenta de nuevo.",
-        variant: "destructive",
-      });
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case "alta": return "bg-red-500";
+      case "media": return "bg-yellow-500";
+      case "baja": return "bg-green-500";
+      default: return "bg-gray-500";
     }
   };
-
-  const getRecommendations = () => {
-    if (!assessment) {
-      return [];
-    }
-    return generateRecommendations(assessment);
-  };
-
-  if (showRecommendations) {
-    const recommendations = getRecommendations();
-
-    // Si no hay recomendaciones, mostrar mensaje
-    if (recommendations.length === 0) {
-      return (
-        <div className="min-h-screen bg-background">
-          <Navbar />
-          <main className="container-accessible py-8">
-            <Card className="max-w-2xl mx-auto">
-              <CardHeader>
-                <CardTitle className="text-2xl">Evaluación incompleta</CardTitle>
-                <CardDescription>
-                  No se pudieron generar recomendaciones. Por favor, completa todos los campos.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button
-                  onClick={() => setShowRecommendations(false)}
-                  className="w-full"
-                >
-                  Volver a la evaluación
-                </Button>
-              </CardContent>
-            </Card>
-          </main>
-        </div>
-      );
-    }
-
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <main className="container-accessible py-8">
-          <div className="mb-8">
-            <h1 className="text-4xl md:text-5xl font-bold mb-3">
-              Tus Recomendaciones Personalizadas
-            </h1>
-            <p className="text-xl text-muted-foreground">
-              Basadas en tu evaluación de salud
-            </p>
-          </div>
-
-          <div className="grid gap-6 mb-8">
-            {recommendations.map((rec, idx) => (
-              <Card key={idx} className="border-2">
-                <CardHeader>
-                  <div className="flex items-start gap-4">
-                    <rec.icon className="w-10 h-10 text-primary flex-shrink-0" />
-                    <div>
-                      <CardTitle className="text-2xl mb-2">{rec.title}</CardTitle>
-                      <CardDescription className="text-lg">{rec.description}</CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-              </Card>
-            ))}
-          </div>
-
-          <Card className="bg-accent/10 border-accent">
-            <CardContent className="py-6">
-              <div className="flex items-start gap-4">
-                <AlertCircle className="w-8 h-8 text-accent flex-shrink-0" />
-                <div>
-                  <h3 className="text-xl font-bold mb-2">Importante</h3>
-                  <p className="text-lg text-muted-foreground">
-                    Estas recomendaciones son generales. Siempre consulta con tu médico antes de iniciar un nuevo programa de ejercicios, especialmente si tienes condiciones médicas preexistentes.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <div className="mt-8 flex gap-4">
-            <Button
-              onClick={() => setShowRecommendations(false)}
-              size="lg"
-              variant="outline"
-              className="text-lg"
-            >
-              Modificar evaluación
-            </Button>
-            <Button
-              onClick={() => navigate("/exercises")}
-              size="lg"
-              className="text-lg"
-            >
-              Ver ejercicios recomendados
-            </Button>
-          </div>
-        </main>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -261,141 +123,91 @@ const Health = () => {
       <main className="container-accessible py-8">
         <div className="mb-8">
           <h1 className="text-4xl md:text-5xl font-bold mb-3">
-            Evaluación de Salud
+            Recomendaciones de Salud
           </h1>
           <p className="text-xl text-muted-foreground">
-            Responde estas preguntas para recibir recomendaciones personalizadas
+            Guías personalizadas para mantener tu bienestar y salud
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Nivel de movilidad */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">¿Cómo describirías tu nivel de movilidad actual?</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <RadioGroup
-                value={assessment?.mobilityLevel || ""}
-                onValueChange={(value) => setAssessment(prev => ({ ...prev, mobilityLevel: value }))}
-                className="space-y-4"
-              >
-                {mobilityLevels.map((level) => (
-                  <div key={level.value} className="flex items-center space-x-3 p-4 rounded-lg border-2 hover:bg-secondary/50 transition-colors">
-                    <RadioGroupItem value={level.value} id={level.value} />
-                    <Label htmlFor={level.value} className="text-lg cursor-pointer flex-1">
-                      {level.label}
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
-            </CardContent>
-          </Card>
+        {/* Filtros por categoría */}
+        <div className="mb-8 flex flex-wrap gap-3">
+          {categories.map((category) => (
+            <Button
+              key={category}
+              variant={selectedCategory === category ? "default" : "outline"}
+              onClick={() => setSelectedCategory(category)}
+              className="text-base"
+            >
+              {category}
+            </Button>
+          ))}
+        </div>
 
-          {/* Condiciones crónicas */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">¿Tienes alguna de estas condiciones? (Selecciona todas las que apliquen)</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {chronicConditions.map((condition) => (
-                <div
-                  key={condition.id}
-                  onClick={() => handleConditionToggle(condition.id)}
-                  className={`flex items-center space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                    (assessment?.chronicConditions || []).includes(condition.id)
-                      ? "bg-primary/10 border-primary"
-                      : "hover:bg-secondary/50"
-                  }`}
-                >
-                  {(assessment?.chronicConditions || []).includes(condition.id) ? (
-                    <CheckCircle2 className="w-6 h-6 text-primary" />
-                  ) : (
-                    <div className="w-6 h-6 rounded-full border-2" />
-                  )}
-                  <Label className="text-lg cursor-pointer flex-1">{condition.label}</Label>
+        {/* Grid de recomendaciones */}
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+          {filteredRecommendations.map((recommendation) => (
+            <Card key={recommendation.id} className="border-2 hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-start gap-4 flex-1">
+                    <recommendation.icon className="w-10 h-10 text-primary flex-shrink-0 mt-1" />
+                    <div className="flex-1">
+                      <CardTitle className="text-xl mb-2">{recommendation.title}</CardTitle>
+                      <Badge 
+                        className={`${getPriorityColor(recommendation.priority)} text-white text-xs mb-2`}
+                      >
+                        Prioridad {recommendation.priority}
+                      </Badge>
+                      <Badge variant="outline" className="ml-2 text-xs">
+                        {recommendation.category}
+                      </Badge>
+                    </div>
+                  </div>
                 </div>
-              ))}
-            </CardContent>
-          </Card>
+              </CardHeader>
+              <CardContent>
+                <CardDescription className="text-base leading-relaxed">
+                  {recommendation.description}
+                </CardDescription>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
 
-          {/* Frecuencia de ejercicio */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">¿Con qué frecuencia haces ejercicio actualmente?</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RadioGroup
-                value={assessment?.exerciseFrequency || ""}
-                onValueChange={(value) => setAssessment(prev => ({ ...prev, exerciseFrequency: value }))}
-                className="space-y-4"
-              >
-                {exerciseFrequencies.map((freq) => (
-                  <div key={freq.value} className="flex items-center space-x-3 p-4 rounded-lg border-2 hover:bg-secondary/50 transition-colors">
-                    <RadioGroupItem value={freq.value} id={freq.value} />
-                    <Label htmlFor={freq.value} className="text-lg cursor-pointer flex-1">
-                      {freq.label}
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
-            </CardContent>
-          </Card>
+        {/* Información importante */}
+        <Card className="bg-accent/10 border-accent">
+          <CardContent className="py-6">
+            <div className="flex items-start gap-4">
+              <AlertCircle className="w-8 h-8 text-accent flex-shrink-0" />
+              <div>
+                <h3 className="text-xl font-bold mb-2">Importante</h3>
+                <p className="text-lg text-muted-foreground">
+                  Estas recomendaciones son generales. Siempre consulta con tu médico antes de iniciar un nuevo programa de ejercicios, especialmente si tienes condiciones médicas preexistentes. Escucha a tu cuerpo y ajusta la intensidad según tu nivel de comodidad.
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
-          {/* Nivel de dolor */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">¿Experimentas dolor al moverte?</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <RadioGroup
-                value={assessment?.painLevel || ""}
-                onValueChange={(value) => setAssessment(prev => ({ ...prev, painLevel: value }))}
-                className="space-y-4"
-              >
-                {painLevels.map((pain) => (
-                  <div key={pain.value} className="flex items-center space-x-3 p-4 rounded-lg border-2 hover:bg-secondary/50 transition-colors">
-                    <RadioGroupItem value={pain.value} id={pain.value} />
-                    <Label htmlFor={pain.value} className="text-lg cursor-pointer flex-1">
-                      {pain.label}
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
-            </CardContent>
-          </Card>
-
-          {/* Objetivos */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl">¿Cuáles son tus objetivos? (Selecciona todos los que apliquen)</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {goalOptions.map((goal) => (
-                <div
-                  key={goal.id}
-                  onClick={() => handleGoalToggle(goal.id)}
-                  className={`flex items-center space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                    (assessment?.goals || []).includes(goal.id)
-                      ? "bg-primary/10 border-primary"
-                      : "hover:bg-secondary/50"
-                  }`}
-                >
-                  {(assessment?.goals || []).includes(goal.id) ? (
-                    <CheckCircle2 className="w-6 h-6 text-primary" />
-                  ) : (
-                    <div className="w-6 h-6 rounded-full border-2" />
-                  )}
-                  <Label className="text-lg cursor-pointer flex-1">{goal.label}</Label>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Button type="submit" size="lg" className="w-full text-lg h-14">
-            Generar recomendaciones personalizadas
+        {/* Acciones rápidas */}
+        <div className="mt-8 flex flex-wrap gap-4">
+          <Button
+            onClick={() => navigate("/exercises")}
+            size="lg"
+            className="text-lg"
+          >
+            Ver ejercicios recomendados
           </Button>
-        </form>
+          <Button
+            onClick={() => navigate("/blog")}
+            size="lg"
+            variant="outline"
+            className="text-lg"
+          >
+            Leer artículos de nutrición
+          </Button>
+        </div>
       </main>
     </div>
   );

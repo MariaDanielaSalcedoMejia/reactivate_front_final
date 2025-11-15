@@ -54,12 +54,29 @@ const Health = () => {
   }, [user]);
 
   const handleConditionToggle = (condition: string) => {
-    setAssessment(prev => ({
-      ...prev,
-      chronicConditions: prev.chronicConditions.includes(condition)
-        ? prev.chronicConditions.filter(c => c !== condition)
-        : [...prev.chronicConditions, condition],
-    }));
+    setAssessment(prev => {
+      const currentConditions = prev.chronicConditions || [];
+      
+      // Si se selecciona "none", limpiar todas las demás condiciones
+      if (condition === "none") {
+        return {
+          ...prev,
+          chronicConditions: currentConditions.includes("none") 
+            ? [] 
+            : ["none"],
+        };
+      }
+      
+      // Si se selecciona cualquier otra condición, quitar "none" si está presente
+      const newConditions = currentConditions.includes(condition)
+        ? currentConditions.filter(c => c !== condition)
+        : [...currentConditions.filter(c => c !== "none"), condition];
+      
+      return {
+        ...prev,
+        chronicConditions: newConditions,
+      };
+    });
   };
 
   const handleGoalToggle = (goal: string) => {
@@ -73,12 +90,42 @@ const Health = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem(`reactivate_health_${user?.id}`, JSON.stringify(assessment));
-    setShowRecommendations(true);
-    toast({
-      title: "Evaluación guardada",
-      description: "Tus recomendaciones han sido generadas",
-    });
+    
+    // Validar que se haya completado al menos el nivel de movilidad
+    if (!assessment.mobilityLevel) {
+      toast({
+        title: "Completa la evaluación",
+        description: "Por favor, selecciona al menos tu nivel de movilidad",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validar que se haya seleccionado al menos un objetivo
+    if (assessment.goals.length === 0) {
+      toast({
+        title: "Completa la evaluación",
+        description: "Por favor, selecciona al menos un objetivo",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      localStorage.setItem(`reactivate_health_${user?.id}`, JSON.stringify(assessment));
+      setShowRecommendations(true);
+      toast({
+        title: "Evaluación guardada",
+        description: "Tus recomendaciones han sido generadas",
+      });
+    } catch (error) {
+      console.error("Error al guardar la evaluación:", error);
+      toast({
+        title: "Error",
+        description: "No se pudo guardar la evaluación. Por favor, intenta de nuevo.",
+        variant: "destructive",
+      });
+    }
   };
 
   const getRecommendations = () => {
@@ -87,6 +134,33 @@ const Health = () => {
 
   if (showRecommendations) {
     const recommendations = getRecommendations();
+
+    // Si no hay recomendaciones, mostrar mensaje
+    if (recommendations.length === 0) {
+      return (
+        <div className="min-h-screen bg-background">
+          <Navbar />
+          <main className="container-accessible py-8">
+            <Card className="max-w-2xl mx-auto">
+              <CardHeader>
+                <CardTitle className="text-2xl">Evaluación incompleta</CardTitle>
+                <CardDescription>
+                  No se pudieron generar recomendaciones. Por favor, completa todos los campos.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  onClick={() => setShowRecommendations(false)}
+                  className="w-full"
+                >
+                  Volver a la evaluación
+                </Button>
+              </CardContent>
+            </Card>
+          </main>
+        </div>
+      );
+    }
 
     return (
       <div className="min-h-screen bg-background">
@@ -201,12 +275,12 @@ const Health = () => {
                   key={condition.id}
                   onClick={() => handleConditionToggle(condition.id)}
                   className={`flex items-center space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                    assessment.chronicConditions.includes(condition.id)
+                    (assessment.chronicConditions || []).includes(condition.id)
                       ? "bg-primary/10 border-primary"
                       : "hover:bg-secondary/50"
                   }`}
                 >
-                  {assessment.chronicConditions.includes(condition.id) ? (
+                  {(assessment.chronicConditions || []).includes(condition.id) ? (
                     <CheckCircle2 className="w-6 h-6 text-primary" />
                   ) : (
                     <div className="w-6 h-6 rounded-full border-2" />
@@ -274,12 +348,12 @@ const Health = () => {
                   key={goal.id}
                   onClick={() => handleGoalToggle(goal.id)}
                   className={`flex items-center space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                    assessment.goals.includes(goal.id)
+                    (assessment.goals || []).includes(goal.id)
                       ? "bg-primary/10 border-primary"
                       : "hover:bg-secondary/50"
                   }`}
                 >
-                  {assessment.goals.includes(goal.id) ? (
+                  {(assessment.goals || []).includes(goal.id) ? (
                     <CheckCircle2 className="w-6 h-6 text-primary" />
                   ) : (
                     <div className="w-6 h-6 rounded-full border-2" />

@@ -40,12 +40,6 @@ export const Navbar = () => {
           {/* Logo */}
           <Link to="/dashboard" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
             <Activity className="w-10 h-10 text-accent" />
-            <div>
-              <h1 className="text-2xl font-bold gradient-hero bg-clip-text text-transparent">
-                ReActívate
-              </h1>
-              <p className="text-xs text-muted-foreground">Tu bienestar, nuestra misión</p>
-            </div>
           </Link>
 
           {/* Desktop Navigation */}
@@ -67,8 +61,8 @@ export const Navbar = () => {
           {/* User Menu & Mobile Toggle */}
           <div className="flex items-center gap-4">
             <div className="hidden md:flex flex-col items-end">
-              <span className="text-sm font-semibold">{user?.name}</span>
-              <span className="text-xs text-muted-foreground">{user?.email}</span>
+              <span className="text-sm font-bold color-green-200">{user?.name}</span>
+             
             </div>
             
             <Button

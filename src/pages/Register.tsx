@@ -69,8 +69,8 @@ const Register = () => {
                 <Input
                   id="age"
                   type="number"
-                  placeholder="60"
-                  min="50"
+                  placeholder="30"
+                  min="15"
                   max="120"
                   value={age}
                   onChange={(e) => setAge(e.target.value)}
